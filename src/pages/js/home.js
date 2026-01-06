@@ -18,9 +18,12 @@ const useHome = () => {
 			loading.value = false;
 		}
 	};
+	const addProduct = async (product) => {
+
+	}
 
 	onMounted(() => {
-		getProducts();
+		getProducts()
 	});
 
 	return {
