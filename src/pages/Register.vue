@@ -1,30 +1,30 @@
 <script setup>
 import {ref} from 'vue';
-import {useRouter} from 'vue-router'; // Added router for redirection
+import {useRouter} from 'vue-router';
 
 const router = useRouter();
 const form = ref({
+  name: '',      // Added name for register
   email: '',
   password: ''
 });
 
-const showPassword = ref(false); // Added this so your template works
+const showPassword = ref(false);
 const isLoading = ref(false);
 const errorMessage = ref('');
 
-const handleSubmit = async () => {
+const handleRegister = async () => {
   isLoading.value = true;
   errorMessage.value = '';
 
   try {
     const apiEndpoint = import.meta.env.VITE_API_URL;
 
-    const response = await fetch(`${apiEndpoint}/api/auth/login`, {
+    const response = await fetch(`${apiEndpoint}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      // MUST add this to match your app.use(cors({ credentials: true }))
       credentials: 'include',
       body: JSON.stringify(form.value),
     });
@@ -32,18 +32,11 @@ const handleSubmit = async () => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Login failed');
+      throw new Error(data.message || 'Registration failed');
     }
 
-    // If login is successful
-    console.log('Success:', data);
-
-    // Store token if your backend provides one in the JSON body
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-    }
-
-    router.push('/'); // Redirect to home/dashboard
+    // Success: Redirect to login
+    router.push('/login');
 
   } catch (error) {
     errorMessage.value = error.message;
@@ -59,11 +52,26 @@ const handleSubmit = async () => {
       <div class="bg-white border border-slate-200 p-8 rounded-2xl shadow-sm">
 
         <div class="mb-8">
-          <h1 class="text-2xl font-semibold text-slate-900">Sign in</h1>
-          <p class="text-sm text-slate-500 mt-1">Please enter your details below.</p>
+          <h1 class="text-2xl font-semibold text-slate-900">Sign up</h1>
+          <p class="text-sm text-slate-500 mt-1">Please enter your details below to join.</p>
         </div>
 
-        <form @submit.prevent="handleSubmit" class="space-y-4">
+        <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">
+          {{ errorMessage }}
+        </div>
+
+        <form @submit.prevent="handleRegister" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1.5">Full Name</label>
+            <input
+                v-model="form.name"
+                type="text"
+                placeholder="John Doe"
+                class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                required
+            />
+          </div>
+
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
             <input
@@ -76,10 +84,7 @@ const handleSubmit = async () => {
           </div>
 
           <div>
-            <div class="flex justify-between mb-1.5">
-              <label class="text-sm font-medium text-slate-700">Password</label>
-
-            </div>
+            <label class="text-sm font-medium text-slate-700 block mb-1.5">Password</label>
             <div class="relative">
               <input
                   v-model="form.password"
@@ -100,15 +105,16 @@ const handleSubmit = async () => {
 
           <button
               type="submit"
-              class="w-full py-3 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-medium transition-colors duration-200 mt-2"
+              :disabled="isLoading"
+              class="w-full py-3 bg-pink-600 hover:bg-pink-700 text-white rounded-lg font-medium transition-colors duration-200 mt-2 disabled:opacity-50"
           >
-            Continue
+            {{ isLoading ? 'Creating account...' : 'Create account' }}
           </button>
         </form>
 
         <p class="text-center text-sm text-slate-600 mt-6">
-          Don't have an account?
-          <RouterLink class="text-pink-600 font-semibold hover:underline" to="/register">Sign up</RouterLink>
+          Already have an account?
+          <RouterLink class="text-pink-600 font-semibold hover:underline" to="/login">Sign in</RouterLink>
         </p>
       </div>
     </div>
@@ -116,5 +122,5 @@ const handleSubmit = async () => {
 </template>
 
 <style scoped>
-/* Removed all animation and blob CSS for a clean look */
+/* Scoped styles removed as per your request for a clean look */
 </style>

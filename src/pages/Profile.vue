@@ -1,107 +1,73 @@
 <script setup>
-import {ref, onMounted} from "vue";
-import {useRouter} from "vue-router";
+import {onMounted} from "vue";
+import {useAuth} from "../hooks/useProfile.js";
 
-const router = useRouter();
-const loading = ref(false);
-const profile = ref(null);
-const error = ref(null);
-
-const getProfile = async () => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    router.push("/login");
-    return;
-  }
-
-  loading.value = true;
-  error.value = null;
-
-  try {
-    const apiEndpoint = import.meta.env.VITE_API_URL;
-
-    const response = await fetch(`${apiEndpoint}/api/auth/profile`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        // Standard way to send tokens
-        "Authorization": `Bearer ${token}`
-      }
-    });
-
-    const data = await response.json();
-    // console.log(data.user);
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        localStorage.removeItem("token");
-        router.push("/login");
-      }
-      throw new Error(data.message || "Failed to fetch profile");
-    }
-
-    profile.value = data.user;
-  } catch (e) {
-    error.value = e.message;
-  } finally {
-    loading.value = false;
-  }
-};
+const {profile, loading, error, getProfile} = useAuth();
 
 onMounted(() => {
   getProfile();
 });
 </script>
 
+
 <template>
-  <div class="max-w-4xl mx-auto mt-10 p-8 bg-white border border-slate-200 rounded-3xl shadow-sm">
+  <div class="max-w-5xl mx-auto antialiased px-4">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 
-    <div v-if="loading" class="space-y-6">
-      <div v-for="i in 3" :key="i" class="animate-pulse">
-        <div class="h-3 bg-slate-100 rounded w-24 mb-2"></div>
-        <div class="h-10 bg-slate-50 rounded-xl w-full"></div>
-      </div>
-    </div>
-
-    <div v-else-if="error" class="flex items-center gap-3 text-red-600 bg-red-50 p-4 rounded-xl border border-red-100">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-              clip-rule="evenodd"/>
-      </svg>
-      <span class="text-sm font-medium">{{ error }}</span>
-    </div>
-
-    <div v-else-if="profile" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-      <div class="p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Full Name</label>
-        <p class="text-slate-800 font-semibold">{{ profile.name }}</p>
+      <div v-if="loading" class="p-6 md:p-10 flex flex-col md:flex-row justify-between gap-6 animate-pulse">
+        <div v-for="i in 4" :key="i" class="h-12 bg-slate-50 rounded-xl w-full md:w-32"></div>
       </div>
 
-      <div class="p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Email Address</label>
-        <p class="text-slate-800 font-semibold">{{ profile.email }}</p>
-      </div>
-
-      <div class="p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Member Since</label>
-        <p class="text-slate-800 font-semibold">
-          {{
-            new Date(profile.createdAt).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'})
-          }}
-        </p>
-      </div>
-
-      <div class="p-4 rounded-2xl bg-slate-50/50 border border-slate-100">
-        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Account Status</label>
-        <div class="flex items-center gap-2 mt-1">
-          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          <span class="text-green-700 text-sm font-bold uppercase">Active</span>
+      <div v-else-if="error" class="p-6 text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 rounded-full text-sm font-medium">
+          <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+          {{ error }}
         </div>
       </div>
 
+      <div v-else-if="profile" class="flex flex-col md:flex-row md:items-center p-6 md:p-10 gap-6 md:gap-12">
+
+        <div class="flex-1">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1.5">Full Name</label>
+          <p class="text-[15px] md:text-base font-semibold text-slate-900">{{ profile.name }}</p>
+        </div>
+
+        <div class="block md:hidden h-px bg-slate-100 w-full"></div>
+
+        <div class="flex-1">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1.5">Email
+            Address</label>
+          <p class="text-[15px] md:text-base font-semibold text-slate-900 truncate">{{ profile.email }}</p>
+        </div>
+
+        <div class="block md:hidden h-px bg-slate-100 w-full"></div>
+
+        <div class="flex-1">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1.5">Joined</label>
+          <p class="text-[15px] md:text-base font-semibold text-slate-900">
+            {{
+              new Date(profile.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })
+            }}
+          </p>
+        </div>
+
+        <div class="flex-shrink-0 pt-2 md:pt-0">
+          <div
+              class="inline-flex items-center gap-2.5 px-3.5 py-1.5 bg-emerald-50 rounded-full border border-emerald-100/50">
+            <span class="relative flex h-2 w-2">
+              <span
+                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span class="text-[11px] font-bold text-emerald-700 uppercase tracking-widest">Active</span>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 </template>
